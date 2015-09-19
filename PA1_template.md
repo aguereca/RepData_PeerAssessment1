@@ -1,9 +1,4 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 
 ## Loading and preprocessing the data
@@ -11,15 +6,23 @@ output:
  1. Load the data (i.e. read.csv())
  2. Process/transform the data (if necessary) into a format suitable for your analysis
 
-```{r echo=TRUE}
+
+```r
 sourceData <- read.csv(unz("activity.zip", "activity.csv"))
 #Process/transform the data (if necessary) into a format suitable for your analysis
 sourceData$date <- as.Date(sourceData$date)
 ```
 
 First rows on our source dataset:
-```{r echo=FALSE}
-print(head(sourceData))
+
+```
+##   steps       date interval
+## 1    NA 2012-10-01        0
+## 2    NA 2012-10-01        5
+## 3    NA 2012-10-01       10
+## 4    NA 2012-10-01       15
+## 5    NA 2012-10-01       20
+## 6    NA 2012-10-01       25
 ```
 
 ## What is mean total number of steps taken per day?
@@ -31,18 +34,26 @@ To generate the overall mean of the total number of steps taken per day:
 
 1. A dataset containing the total number of steps taken each day is created.
 
-```{r echo=TRUE}
+
+```r
 dailyStepSum <- aggregate(x=sourceData$steps, by=list(sourceData$date), FUN=sum, na.rm=TRUE)
 ```
    Which generates:
-```{r echo=FALSE}
-colnames(dailyStepSum) <- c("Date", "Steps")
-print(head(dailyStepSum))
+
+```
+##         Date Steps
+## 1 2012-10-01     0
+## 2 2012-10-02   126
+## 3 2012-10-03 11352
+## 4 2012-10-04 12116
+## 5 2012-10-05 13294
+## 6 2012-10-06 15420
 ```
 
 2. A histogram is created for visual representation.
 
-```{r hist_total_steps_day, fig.width=15, echo=TRUE, tidy=FALSE}
+
+```r
 with(dailyStepSum, {
     par(oma=c(2,0,0,0), mar=c(6.75,6.75,3,0), mgp=c(5.75,0.75,0), las=2)
     barplot(
@@ -56,21 +67,27 @@ with(dailyStepSum, {
 })
 ```
 
+![](PA1_template_files/figure-html/hist_total_steps_day-1.png) 
+
 3. Calculate the mean and median values (ignoring NA values) using the above dataset.
 
   1. Mean
-```{r echo=TRUE}
+
+```r
 dailyStepMean <- mean(dailyStepSum$Steps, na.rm=TRUE)
 ```
-```{r echo=FALSE}
-print(dailyStepMean)
+
+```
+## [1] 9354.23
 ```
   2. Median
-```{r echo=TRUE}
+
+```r
 dailyStepMedian <- median(dailyStepSum$Steps, na.rm=TRUE)
 ```
-```{r echo=FALSE}
-print(dailyStepMedian)
+
+```
+## [1] 10395
 ```
 
 ## What is the average daily activity pattern?
@@ -82,7 +99,8 @@ Now we need to find the mean steps taken for each 5-minute time interval average
 
 1. Generate the mean (average) number of steps taken (ignoring NA values) for each 5-minute interval, itself averaged across all days.
   
-```{r echo=TRUE, tidy=FALSE}
+
+```r
 intervalSteps <- aggregate(
     data=sourceData,
     steps~interval,
@@ -92,13 +110,21 @@ intervalSteps <- aggregate(
 colnames(intervalSteps) <- c("Interval", "AvgStepsAvgAcrossDay")
 ```
    Which generates:
-```{r echo=FALSE}
-print(head(intervalSteps))
+
+```
+##   Interval AvgStepsAvgAcrossDay
+## 1        0            1.7169811
+## 2        5            0.3396226
+## 3       10            0.1320755
+## 4       15            0.1509434
+## 5       20            0.0754717
+## 6       25            2.0943396
 ```
   
 2. A Time-Series plot is created from the above dataset
 
-```{r timeseries_avg_steps_interval, fig.width=15, echo=TRUE, tidy=FALSE}
+
+```r
 with(intervalSteps, {
     plot(
       x=Interval,
@@ -110,16 +136,21 @@ with(intervalSteps, {
     )
 })
 ```
+
+![](PA1_template_files/figure-html/timeseries_avg_steps_interval-1.png) 
   
 3. Finding the 5-minute interval with the maximum number of steps
 
-```{r echo=TRUE, tidy=FALSE}
+
+```r
 intervalMax <- intervalSteps[intervalSteps$AvgStepsAvgAcrossDay==max(intervalSteps$AvgStepsAvgAcrossDay),]
 ```
-```{r echo=FALSE}
-print(intervalMax)
+
 ```
-We conclude that interval **`r as.character(intervalMax[1])`** ..  **`r as.character(as.numeric(intervalMax[1])+5)`** (minutes) has the maximum number of steps.
+##     Interval AvgStepsAvgAcrossDay
+## 104      835             206.1698
+```
+We conclude that interval **835** ..  **840** (minutes) has the maximum number of steps.
 
 
 ## Imputing missing values
@@ -135,18 +166,21 @@ To achieve this the mean 5-minunte interval values from the previous section wil
 
 1. Total number of rows with NA values in original data.
 
-```{r echo=TRUE}
+
+```r
 countNA <- nrow(subset(sourceData, is.na(sourceData$steps)))
 ```
-```{r echo=FALSE}
-print(countNA)
+
+```
+## [1] 2304
 ```
 
 2. The average 5-minute interval values from the prevous section is used to replace the NA values of the original data and a new dataset will be generated from the latter.
 
  Decimal values will be rounded up to a whole number.
  
-```{r echo=TRUE, tidy=FALSE}
+
+```r
 stepValues <- data.frame(sourceData$steps)
 stepValues[is.na(stepValues),] <- ceiling(tapply(X=sourceData$steps,INDEX=sourceData$interval,FUN=mean,na.rm=TRUE))
 newData <- cbind(stepValues, sourceData[,2:3])
@@ -154,24 +188,39 @@ colnames(newData) <- c("Steps", "Date", "Interval")
 ```
   
   Which generates:
-```{r echo=FALSE}
-print(head(newData))
+
+```
+##   Steps       Date Interval
+## 1     2 2012-10-01        0
+## 2     1 2012-10-01        5
+## 3     1 2012-10-01       10
+## 4     1 2012-10-01       15
+## 5     1 2012-10-01       20
+## 6     3 2012-10-01       25
 ```
 
 3. The total number of steps taken each day is generated using this new dataset.
 
-```{r echo=TRUE}
+
+```r
 newDailyStepSum <- aggregate(newData$Steps, list(newData$Date), sum)
 ```
    Which generates:
-```{r echo=FALSE}
-colnames(newDailyStepSum) <- c("Date", "Steps")
-print(head(newDailyStepSum))
+
+```
+##         Date Steps
+## 1 2012-10-01 10909
+## 2 2012-10-02   126
+## 3 2012-10-03 11352
+## 4 2012-10-04 12116
+## 5 2012-10-05 13294
+## 6 2012-10-06 15420
 ```
 
 4. A histogram of this data as visual representation:
 
-```{r hist_total_steps_day_nna, fig.width=15, echo=TRUE, tidy=FALSE}
+
+```r
 with(newDailyStepSum, {
     par(oma=c(2,0,0,0), mar=c(6.75,6.75,3,0), mgp=c(5.75,0.75,0), las=2)
     barplot(
@@ -185,27 +234,33 @@ with(newDailyStepSum, {
 })
 ```
 
+![](PA1_template_files/figure-html/hist_total_steps_day_nna-1.png) 
+
 5. Calculate the mean and median values of this new dataset (NA values replaced with mean).
 
   1. Mean
-```{r echo=TRUE}
+
+```r
 newDailyStepMean <- mean(newDailyStepSum$Steps)
 ```
-```{r echo=FALSE}
-print(newDailyStepMean)
+
+```
+## [1] 10784.92
 ```
   2. Median
-```{r echo=TRUE}
+
+```r
 newDailyStepMedian <- median(newDailyStepSum$Steps)
 ```
-```{r echo=FALSE}
-print(newDailyStepMedian)
+
+```
+## [1] 10909
 ```
       
 6. We conclude by observation that adding missing values to the original data has caused both the mean and median values to increase.
 
-  1. Mean: `r as.character(floor(as.numeric(dailyStepMean)))` to `r as.character(floor(as.numeric(newDailyStepMean)))`
-  2. Median: `r as.character(floor(as.numeric(dailyStepMedian)))` to `r as.character(floor(as.numeric(newDailyStepMedian)))`
+  1. Mean: 9354 to 10784
+  2. Median: 10395 to 10909
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
@@ -215,32 +270,49 @@ print(newDailyStepMedian)
 
 1.  New factor indicating if date is a weekday/weekend is added to dataset created in the previous section.
 
-```{r echo=TRUE}
+
+```r
 newDataWithDayType <- newData
 newDataWithDayType$DayType <- as.factor(ifelse(weekdays(newData$Date) %in% c("Saturday","Sunday"), "Weekend", "Weekday"))
 ```
   
   Which generates:
-```{r echo=FALSE}
-print(head(newDataWithDayType))
+
+```
+##   Steps       Date Interval DayType
+## 1     2 2012-10-01        0 Weekday
+## 2     1 2012-10-01        5 Weekday
+## 3     1 2012-10-01       10 Weekday
+## 4     1 2012-10-01       15 Weekday
+## 5     1 2012-10-01       20 Weekday
+## 6     3 2012-10-01       25 Weekday
 ```
 2. The data is then separated into weekday or weekend and the mean number of steps taken for each 5-minute interval, itself averaged across all weekday days or weekend days is calculated.
 
-```{r echo=TRUE, tidy=FALSE}
+
+```r
 dayTypeIntervalSteps <- aggregate(
     data=newDataWithDayType,
     Steps ~ DayType + Interval,
     FUN=mean
 )
-```  
+```
    Which generates:
-```{r echo=FALSE}
-print(head(dayTypeIntervalSteps))
+
+```
+##   DayType Interval     Steps
+## 1 Weekday        0 2.2888889
+## 2 Weekend        0 0.2500000
+## 3 Weekday        5 0.5333333
+## 4 Weekend        5 0.1250000
+## 5 Weekday       10 0.2888889
+## 6 Weekend       10 0.1250000
 ```
 
 3. Finally, a panel plot of both weekend and weekday graphs:
 
-```{r hist_interval_steps_daytype, fig.width=15, echo=TRUE, tidy=FALSE}
+
+```r
 library("lattice")
   
 xyplot(
@@ -252,3 +324,5 @@ xyplot(
     layout=c(1,2)
 )
 ```
+
+![](PA1_template_files/figure-html/hist_interval_steps_daytype-1.png) 
